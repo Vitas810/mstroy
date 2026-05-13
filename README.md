@@ -42,6 +42,7 @@ npm run build
 
 - [src/store/TreeStore.ts](</Users/bazon/Desktop/ проекты/mstroy/src/store/TreeStore.ts>) — реализация хранилища дерева и всех операций над элементами.
 - [src/components/TreeGrid.vue](</Users/bazon/Desktop/ проекты/mstroy/src/components/TreeGrid.vue>) — Vue-компонент таблицы на `AgGrid`.
+- [src/utils/buildTreeGridRows.ts](</Users/bazon/Desktop/ проекты/mstroy/src/utils/buildTreeGridRows.ts>) — подготовка строк таблицы с путями по дереву и вычисленной категорией.
 - [src/types/tree.ts](</Users/bazon/Desktop/ проекты/mstroy/src/types/tree.ts>) — общие типы для элементов дерева и строк таблицы.
 - [tests/](</Users/bazon/Desktop/ проекты/mstroy/tests>) — unit-тесты для хранилища и компонента.
 
