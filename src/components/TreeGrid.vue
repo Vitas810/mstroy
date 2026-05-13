@@ -14,7 +14,8 @@
 <script setup lang="ts">
 import { AgGridVue } from 'ag-grid-vue3'
 import { TreeStore } from '@/store/TreeStore'
-import { treeItems, type DemoTreeItem } from '@/store/treeItems'
+import { treeItems } from '@/store/treeItems'
+import type { DemoTreeItem, TreeGridRow, TreeRowCategory } from '@/types/tree'
 import {
   themeQuartz,
   type AutoGroupColumnDef,
@@ -23,20 +24,15 @@ import {
   type ValueGetterParams,
 } from 'ag-grid-community'
 
-type GridRow = DemoTreeItem & {
-  path: string[]
-  category: 'Группа' | 'Элемент'
-}
-
 const store = new TreeStore<DemoTreeItem>(treeItems)
 
-const rowData: GridRow[] = store.getAll().map((item) => {
+const rowData: TreeGridRow[] = store.getAll().map((item) => {
   const path = store
       .getAllParents(item.id)
       .reverse()
       .map(parentItem => parentItem.label)
 
-  const category = store.getChildren(item.id).length > 0
+  const category: TreeRowCategory = store.getChildren(item.id).length > 0
       ? 'Группа'
       : 'Элемент'
 
@@ -51,7 +47,7 @@ const columnDefs: ColDef[] = [
   {
     headerName: '№ п/п',
     width: 90,
-    valueGetter: (params: ValueGetterParams<GridRow>) => {
+    valueGetter: (params: ValueGetterParams<TreeGridRow>) => {
       if (params.node?.rowIndex === null || params.node?.rowIndex === undefined) {
         return ''
       }
@@ -66,12 +62,12 @@ const columnDefs: ColDef[] = [
   },
 ]
 
-const autoGroupColumnDef: AutoGroupColumnDef<GridRow> = {
+const autoGroupColumnDef: AutoGroupColumnDef<TreeGridRow> = {
   headerName: 'Наименование',
   minWidth: 280,
 }
 
-const getDataPath: GetDataPath<GridRow> = (data) => data.path
+const getDataPath: GetDataPath<TreeGridRow> = (data) => data.path
 
 </script>
 

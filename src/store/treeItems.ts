@@ -1,8 +1,4 @@
-import type { TreeNodeBase } from '@/store/TreeStore'
-
-export type DemoTreeItem = TreeNodeBase & {
-    label: string
-}
+import type { DemoTreeItem } from '@/types/tree'
 
 export const treeItems: DemoTreeItem[] = [
     { id: 1, parent: null, label: 'Айтем 1' },

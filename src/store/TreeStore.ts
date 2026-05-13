@@ -1,9 +1,4 @@
-export type TreeItemId = string | number
-
-export type TreeNodeBase = {
-    id: TreeItemId
-    parent: TreeItemId | null
-}
+import type { TreeItemId, TreeNodeBase } from '@/types/tree'
 
 export class TreeStore<T extends TreeNodeBase> {
     private items: T[]
