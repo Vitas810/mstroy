@@ -1,0 +1,19 @@
+# dependencies
+node_modules
+
+# build
+dist
+
+# Logs
+logs
+*.log
+
+# IDE
+.idea
+.vscode
+
+# macOS
+.DS_Store
+
+# typescript
+*.tsbuildinfo
