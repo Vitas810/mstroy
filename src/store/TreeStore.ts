@@ -1,72 +1,64 @@
-type TreeItemId = string | number
+export type TreeItemId = string | number
 
-type TreeItem = {
-    id: TreeItemId,
-    parent: TreeItemId | null,
-    label: string,
+export type TreeNodeBase = {
+    id: TreeItemId
+    parent: TreeItemId | null
 }
 
-export class TreeStore {
-    private items: TreeItem[]
-    private itemMap = new Map<TreeItemId, TreeItem>()
-    private childrenMap = new Map<TreeItemId | null, TreeItem[]>()
+export class TreeStore<T extends TreeNodeBase> {
+    private items: T[]
+    private readonly itemMap = new Map<TreeItemId, T>()
+    private readonly itemIndexMap = new Map<TreeItemId, number>()
+    private readonly childrenMap = new Map<TreeItemId | null, T[]>()
 
-    constructor(items: TreeItem[]) {
+    constructor(items: T[]) {
         this.items = items
 
-        for (const item of items) {
+        for (const item of this.items) {
             this.itemMap.set(item.id, item)
-
-            const children: TreeItem[] = this.childrenMap.get(item.parent) ?? []
-
-            children.push(item)
-
-            this.childrenMap.set(item.parent, children)
+            this.itemIndexMap.set(item.id, this.itemIndexMap.size)
+            this.addChildLink(item)
         }
     }
 
     // Получение всех элементов
-    getAll():readonly TreeItem[] {
+    getAll(): readonly T[] {
         return this.items
     }
 
     // Получаем конкретный элемент по id
-    getItem(id: TreeItemId) {
+    getItem(id: TreeItemId): T | undefined {
         return this.itemMap.get(id)
     }
 
     // Получаем прямых детей
-    getChildren(id: TreeItemId) {
+    getChildren(id: TreeItemId): T[] {
         return this.childrenMap.get(id) ?? []
     }
 
     // Получаем всех детей
-    getAllChildren(id: TreeItemId): TreeItem[] {
-        const result: TreeItem[] = []
-        const stack: TreeItem[] = []
+    getAllChildren(id: TreeItemId): T[] {
+        const result: T[] = []
+        const stack = [...this.getChildren(id)]
 
-        for (const child of this.getChildren(id)) {
-            stack.push(child)
-        }
+        while (stack.length > 0) {
+            const current = stack.pop()
 
-        while (stack.length) {
-            const current = stack.pop()!
+            if (!current) {
+                continue
+            }
 
             result.push(current)
-
-            for (const child of this.getChildren(current.id)) {
-                stack.push(child)
-            }
+            stack.push(...this.getChildren(current.id))
         }
 
         return result
     }
 
     // Получаем цепочку родительских элементов с сохранением порядка
-    getAllParents(id: TreeItemId) {
-        const result: TreeItem[] = []
-
-        let current: TreeItem | undefined = this.itemMap.get(id)
+    getAllParents(id: TreeItemId): T[] {
+        const result: T[] = []
+        let current = this.itemMap.get(id)
 
         while (current) {
             result.push(current)
@@ -77,91 +69,137 @@ export class TreeStore {
 
             current = this.itemMap.get(current.parent)
         }
+
         return result
     }
 
     // Добавляем элемент
-    addItem(item: TreeItem): void {
+    addItem(item: T): void {
+        if (this.itemMap.has(item.id)) {
+            this.updateItem(item)
+            return
+        }
+
         this.items.push(item)
         this.itemMap.set(item.id, item)
+        this.itemIndexMap.set(item.id, this.items.length - 1)
+        this.addChildLink(item)
+    }
 
+    // Удаляем элемент и всех его потомков
+    removeItem(id: TreeItemId): void {
+        const root = this.itemMap.get(id)
+
+        if (!root) {
+            return
+        }
+
+        const stack: T[] = [root]
+        const idsToRemove: TreeItemId[] = []
+
+        while (stack.length > 0) {
+            const current = stack.pop()
+
+            if (!current) {
+                continue
+            }
+
+            idsToRemove.push(current.id)
+            stack.push(...this.getChildren(current.id))
+        }
+
+        for (const itemId of idsToRemove) {
+            const item = this.itemMap.get(itemId)
+
+            if (!item) {
+                continue
+            }
+
+            this.removeChildLink(item)
+            this.childrenMap.delete(item.id)
+            this.itemMap.delete(item.id)
+            this.removeFromItems(item.id)
+        }
+    }
+
+    // Обновляем элемент
+    updateItem(item: T): void {
+        const currentItem = this.itemMap.get(item.id)
+
+        if (!currentItem) {
+            return
+        }
+
+        if (currentItem.parent !== item.parent) {
+            this.removeChildLink(currentItem)
+            this.addChildLink(item)
+        } else {
+            const childrenOfParent = this.childrenMap.get(item.parent)
+
+            if (childrenOfParent) {
+                const index = childrenOfParent.findIndex(
+                    current => current.id === item.id,
+                )
+
+                if (index !== -1) {
+                    childrenOfParent[index] = item
+                }
+            }
+        }
+
+        this.itemMap.set(item.id, item)
+
+        const itemIndex = this.itemIndexMap.get(item.id)
+
+        if (itemIndex !== undefined) {
+            this.items[itemIndex] = item
+        }
+    }
+
+    private addChildLink(item: T): void {
         const children = this.childrenMap.get(item.parent) ?? []
         children.push(item)
         this.childrenMap.set(item.parent, children)
     }
 
-    // Удаляем элемент
-    removeItem(id: TreeItemId): void {
-        const itemsToRemove: TreeItem[] = []
+    private removeChildLink(item: T): void {
+        const childrenOfParent = this.childrenMap.get(item.parent)
 
-        const currentItem = this.getItem(id)
-
-        if (!currentItem) {
+        if (!childrenOfParent) {
             return
         }
 
-        itemsToRemove.push(currentItem)
-
-        for (const child of this.getAllChildren(id)) {
-            itemsToRemove.push(child)
-        }
-
-        for (const item of itemsToRemove) {
-            this.itemMap.delete(item.id)
-            this.childrenMap.delete(item.id)
-
-            const children = this.childrenMap.get(item.parent)
-
-            if (!children) {
-                continue
-            }
-
-            const index = children.findIndex(
-                current => current.id === item.id,
-            )
-
-            if (index !== -1) {
-                children.splice(index, 1)
-            }
-        }
-
-        this.items = this.items.filter(
-            item => this.itemMap.has(item.id),
-        )
-    }
-
-    // Обновляем элемент
-    updateItem(item: TreeItem): void {
-        const currentItem = this.getItem(item.id)
-
-        if (!currentItem) {
-            return
-        }
-
-        this.itemMap.set(item.id, item)
-
-        const children =
-            this.childrenMap.get(currentItem.parent) ?? []
-
-        const index = children.findIndex(
+        const index = childrenOfParent.findIndex(
             current => current.id === item.id,
         )
 
-        if (index !== -1) {
-            children.splice(index, 1)
+        if (index === -1) {
+            return
         }
 
-        const nextChildren =
-            this.childrenMap.get(item.parent) ?? []
+        childrenOfParent.splice(index, 1)
 
-        nextChildren.push(item)
+        if (childrenOfParent.length === 0) {
+            this.childrenMap.delete(item.parent)
+        }
+    }
 
-        this.childrenMap.set(item.parent, nextChildren)
+    private removeFromItems(id: TreeItemId): void {
+        const index = this.itemIndexMap.get(id)
 
-        this.items = this.items.map(current =>
-            current.id === item.id
-                ? item
-                : current,
-        )
+        if (index === undefined) {
+            return
+        }
+
+        const lastIndex = this.items.length - 1
+        const lastItem = this.items[lastIndex]
+
+        if (index !== lastIndex && lastItem) {
+            this.items[index] = lastItem
+            this.itemIndexMap.set(lastItem.id, index)
+        }
+
+        this.items.pop()
+        this.itemIndexMap.delete(id)
     }
 }

@@ -4,105 +4,74 @@
       :theme="themeQuartz"
       :rowData="rowData"
       :columnDefs="columnDefs"
+      :treeData="true"
+      :getDataPath="getDataPath"
+      :autoGroupColumnDef="autoGroupColumnDef"
+      :groupDefaultExpanded="-1"
   />
 </template>
 
 <script setup lang="ts">
 import { AgGridVue } from 'ag-grid-vue3'
-import {TreeStore} from "@/store/TreeStore";
+import { TreeStore } from '@/store/TreeStore'
+import { treeItems, type DemoTreeItem } from '@/store/treeItems'
 import {
   themeQuartz,
+  type AutoGroupColumnDef,
   type ColDef,
+  type GetDataPath,
+  type ValueGetterParams,
 } from 'ag-grid-community'
 
-const rowData = [
-  {
-    id: 1,
-    parent: null,
-    label: 'Айтем 1',
-    category: 'Группа',
-    path: ['Айтем 1'],
-  },
-  {
-    id: '91064cee',
-    parent: 1,
-    label: 'Айтем 2',
-    category: 'Группа',
-    path: ['Айтем 1', 'Айтем 2'],
-  },
-  {
-    id: 3,
-    parent: 1,
-    label: 'Айтем 3',
-    category: 'Элемент',
-    path: ['Айтем 1', 'Айтем 3'],
-  },
-  {
-    id: 4,
-    parent: '91064cee',
-    label: 'Айтем 4',
-    category: 'Группа',
-    path: ['Айтем 1', 'Айтем 2', 'Айтем 4'],
-  },
-  {
-    id: 5,
-    parent: '91064cee',
-    label: 'Айтем 5',
-    category: 'Элемент',
-    path: ['Айтем 1', 'Айтем 2', 'Айтем 5'],
-  },
-  {
-    id: 6,
-    parent: '91064cee',
-    label: 'Айтем 6',
-    category: 'Элемент',
-    path: ['Айтем 1', 'Айтем 2', 'Айтем 6'],
-  },
-  {
-    id: 7,
-    parent: 4,
-    label: 'Айтем 7',
-    category: 'Элемент',
-    path: ['Айтем 1', 'Айтем 2', 'Айтем 4', 'Айтем 7'],
-  },
-  {
-    id: 8,
-    parent: 4,
-    label: 'Айтем 8',
-    category: 'Элемент',
-    path: ['Айтем 1', 'Айтем 2', 'Айтем 4', 'Айтем 8'],
-  },
-]
+type GridRow = DemoTreeItem & {
+  path: string[]
+  category: 'Группа' | 'Элемент'
+}
+
+const store = new TreeStore<DemoTreeItem>(treeItems)
+
+const rowData: GridRow[] = store.getAll().map((item) => {
+  const path = store
+      .getAllParents(item.id)
+      .reverse()
+      .map(parentItem => parentItem.label)
+
+  const category = store.getChildren(item.id).length > 0
+      ? 'Группа'
+      : 'Элемент'
+
+  return {
+    ...item,
+    path,
+    category,
+  }
+})
 
 const columnDefs: ColDef[] = [
   {
-    field: 'id',
-    headerName: '№',
+    headerName: '№ п/п',
     width: 90,
+    valueGetter: (params: ValueGetterParams<GridRow>) => {
+      if (params.node?.rowIndex === null || params.node?.rowIndex === undefined) {
+        return ''
+      }
+
+      return params.node.rowIndex + 1
+    },
   },
   {
     field: 'category',
     headerName: 'Категория',
     flex: 1,
   },
-  {
-    field: 'label',
-    headerName: 'Наименование',
-    flex: 2,
-  },
 ]
 
+const autoGroupColumnDef: AutoGroupColumnDef<GridRow> = {
+  headerName: 'Наименование',
+  minWidth: 280,
+}
 
-const store = new TreeStore(rowData)
-
-store.updateItem(  {
-  id: 6,
-  parent: '91064cee',
-  label: 'Айтем 69',
-})
-
-store.removeItem(4)
-console.log(store.getAllChildren(1))
+const getDataPath: GetDataPath<GridRow> = (data) => data.path
 
 </script>
 
