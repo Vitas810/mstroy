@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { AgGridVue } from 'ag-grid-vue3'
-
+import {TreeStore} from "@/store/TreeStore";
 import {
   themeQuartz,
   type ColDef,
@@ -17,63 +17,93 @@ import {
 
 const rowData = [
   {
-    mission: 'Voyager 1',
-    company: 'NASA',
-    location: 'Cape Canaveral',
-    date: '1977-09-05',
-    price: 250,
-    successful: true,
+    id: 1,
+    parent: null,
+    label: 'Айтем 1',
+    category: 'Группа',
+    path: ['Айтем 1'],
   },
   {
-    mission: 'Apollo 11',
-    company: 'NASA',
-    location: 'Kennedy Space Center',
-    date: '1969-07-16',
-    price: 355,
-    successful: true,
+    id: '91064cee',
+    parent: 1,
+    label: 'Айтем 2',
+    category: 'Группа',
+    path: ['Айтем 1', 'Айтем 2'],
   },
   {
-    mission: 'Falcon Heavy Test',
-    company: 'SpaceX',
-    location: 'Cape Canaveral',
-    date: '2018-02-06',
-    price: 90,
-    successful: true,
+    id: 3,
+    parent: 1,
+    label: 'Айтем 3',
+    category: 'Элемент',
+    path: ['Айтем 1', 'Айтем 3'],
+  },
+  {
+    id: 4,
+    parent: '91064cee',
+    label: 'Айтем 4',
+    category: 'Группа',
+    path: ['Айтем 1', 'Айтем 2', 'Айтем 4'],
+  },
+  {
+    id: 5,
+    parent: '91064cee',
+    label: 'Айтем 5',
+    category: 'Элемент',
+    path: ['Айтем 1', 'Айтем 2', 'Айтем 5'],
+  },
+  {
+    id: 6,
+    parent: '91064cee',
+    label: 'Айтем 6',
+    category: 'Элемент',
+    path: ['Айтем 1', 'Айтем 2', 'Айтем 6'],
+  },
+  {
+    id: 7,
+    parent: 4,
+    label: 'Айтем 7',
+    category: 'Элемент',
+    path: ['Айтем 1', 'Айтем 2', 'Айтем 4', 'Айтем 7'],
+  },
+  {
+    id: 8,
+    parent: 4,
+    label: 'Айтем 8',
+    category: 'Элемент',
+    path: ['Айтем 1', 'Айтем 2', 'Айтем 4', 'Айтем 8'],
   },
 ]
 
 const columnDefs: ColDef[] = [
   {
-    field: 'mission',
-    headerName: 'Mission',
+    field: 'id',
+    headerName: '№',
+    width: 90,
+  },
+  {
+    field: 'category',
+    headerName: 'Категория',
     flex: 1,
   },
   {
-    field: 'company',
-    headerName: 'Company',
-    flex: 1,
-  },
-  {
-    field: 'location',
-    headerName: 'Location',
-    flex: 1,
-  },
-  {
-    field: 'date',
-    headerName: 'Date',
-    flex: 1,
-  },
-  {
-    field: 'price',
-    headerName: 'Price',
-    flex: 1,
-  },
-  {
-    field: 'successful',
-    headerName: 'Successful',
-    flex: 1,
+    field: 'label',
+    headerName: 'Наименование',
+    flex: 2,
   },
 ]
+
+
+const store = new TreeStore(rowData)
+
+store.updateItem(  {
+  id: 6,
+  parent: '91064cee',
+  label: 'Айтем 69',
+})
+
+store.removeItem(4)
+console.log(store.getAllChildren(1))
+
 </script>
 
 <style scoped>
