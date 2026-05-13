@@ -50,12 +50,42 @@ describe('Компонент TreeGrid', () => {
 
       const grid = wrapper.findComponent({ name: 'AgGridVue' })
       const columnDefs = grid.props('columnDefs') as Array<{ headerName?: string; valueGetter?: (params: unknown) => unknown }>
-      const numberColumn = columnDefs.find(col => col.headerName === '№ п/п')
+      const numberColumn = columnDefs.find(col => col.headerName === '№ п\\п')
 
       expect(numberColumn).toBeDefined()
       expect(numberColumn?.valueGetter?.({ node: { rowIndex: 0 } })).toBe(1)
       expect(numberColumn?.valueGetter?.({ node: { rowIndex: undefined } })).toBe('')
       expect(numberColumn?.valueGetter?.({ node: { rowIndex: null } })).toBe('')
+    })
+
+    it('колонка "Категория" настроена как древовидная', () => {
+      const wrapper = mount(TreeGrid, {
+        global: {
+          stubs: {
+            AgGridVue: {
+              name: 'AgGridVue',
+              template: '<div class="ag-grid-stub" />',
+              props: ['rowData', 'columnDefs', 'getDataPath', 'treeDataDisplayType'],
+            },
+          },
+        },
+      })
+
+      const grid = wrapper.findComponent({ name: 'AgGridVue' })
+      const columnDefs = grid.props('columnDefs') as Array<{
+        headerName?: string
+        field?: string
+        showRowGroup?: boolean
+        cellRenderer?: string
+      }>
+      const categoryColumn = columnDefs.find(col => col.headerName === 'Категория')
+      const nameColumn = columnDefs.find(col => col.headerName === 'Наименование')
+
+      expect(categoryColumn).toBeDefined()
+      expect(categoryColumn?.field).toBe('category')
+      expect(categoryColumn?.showRowGroup).toBe(true)
+      expect(categoryColumn?.cellRenderer).toBe('agGroupCellRenderer')
+      expect(nameColumn?.field).toBe('label')
     })
   })
 })

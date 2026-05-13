@@ -1,13 +1,15 @@
 <template>
   <AgGridVue
       class="grid"
-      :theme="themeQuartz"
+      :theme="gridTheme"
       :rowData="rowData"
       :columnDefs="columnDefs"
+      :defaultColDef="defaultColDef"
       :treeData="true"
       :getDataPath="getDataPath"
-      :autoGroupColumnDef="autoGroupColumnDef"
       :groupDefaultExpanded="-1"
+      domLayout="autoHeight"
+      treeDataDisplayType="custom"
   />
 </template>
 
@@ -15,38 +17,34 @@
 import { AgGridVue } from 'ag-grid-vue3'
 import { TreeStore } from '@/store/TreeStore'
 import { treeItems } from '@/store/treeItems'
-import type { DemoTreeItem, TreeGridRow, TreeRowCategory } from '@/types/tree'
+import type { DemoTreeItem, TreeGridRow } from '@/types/tree'
+import { buildTreeGridRows } from '@/utils/buildTreeGridRows'
 import {
   themeQuartz,
-  type AutoGroupColumnDef,
   type ColDef,
   type GetDataPath,
   type ValueGetterParams,
 } from 'ag-grid-community'
 
 const store = new TreeStore<DemoTreeItem>(treeItems)
+const items = store.getAll()
 
-const rowData: TreeGridRow[] = store.getAll().map((item) => {
-  const path = store
-      .getAllParents(item.id)
-      .reverse()
-      .map(parentItem => parentItem.label)
-
-  const category: TreeRowCategory = store.getChildren(item.id).length > 0
-      ? 'Группа'
-      : 'Элемент'
-
-  return {
-    ...item,
-    path,
-    category,
-  }
+const gridTheme = themeQuartz.withParams({
+  headerColumnBorder: {
+    color: '#c9c9c9',
+  },
+  headerColumnBorderHeight: '100%',
+  headerColumnResizeHandleWidth: '0px',
+  headerColumnResizeHandleColor: 'transparent',
+  wrapperBorderRadius: '8px',
 })
 
-const columnDefs: ColDef[] = [
+const rowData: TreeGridRow[] = buildTreeGridRows(items)
+
+const columnDefs: ColDef<TreeGridRow>[] = [
   {
-    headerName: '№ п/п',
-    width: 90,
+    headerName: '№ п\\п',
+    width: 100,
     valueGetter: (params: ValueGetterParams<TreeGridRow>) => {
       if (params.node?.rowIndex === null || params.node?.rowIndex === undefined) {
         return ''
@@ -56,15 +54,25 @@ const columnDefs: ColDef[] = [
     },
   },
   {
-    field: 'category',
     headerName: 'Категория',
+    field: 'category',
+    showRowGroup: true,
+    minWidth: 220,
+    cellRenderer: 'agGroupCellRenderer',
+    cellRendererParams: {
+      suppressCount: true,
+    },
+  },
+  {
+    field: 'label',
+    headerName: 'Наименование',
     flex: 1,
   },
 ]
 
-const autoGroupColumnDef: AutoGroupColumnDef<TreeGridRow> = {
-  headerName: 'Наименование',
-  minWidth: 280,
+const defaultColDef: ColDef<TreeGridRow> = {
+  resizable: false,
+  suppressHeaderMenuButton: true,
 }
 
 const getDataPath: GetDataPath<TreeGridRow> = (data) => data.path
@@ -72,8 +80,13 @@ const getDataPath: GetDataPath<TreeGridRow> = (data) => data.path
 </script>
 
 <style scoped>
-  .grid {
-    width: 100%;
-    height: 600px;
-  }
+.grid {
+  width: 100%;
+}
+</style>
+
+<style>
+.grid .ag-center-cols-viewport {
+  min-height: unset !important;
+}
 </style>
