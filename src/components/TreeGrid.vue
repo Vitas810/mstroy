@@ -1,15 +1,15 @@
 <template>
   <AgGridVue
-      class="grid"
-      :theme="gridTheme"
-      :rowData="rowData"
-      :columnDefs="columnDefs"
-      :defaultColDef="defaultColDef"
-      :treeData="true"
-      :getDataPath="getDataPath"
-      :groupDefaultExpanded="-1"
-      domLayout="autoHeight"
-      treeDataDisplayType="custom"
+    class="grid-tree"
+    :theme="gridTheme"
+    :rowData="rowData"
+    :columnDefs="columnDefs"
+    :defaultColDef="defaultColDef"
+    :treeData="true"
+    :getDataPath="getDataPath"
+    :groupDefaultExpanded="-1"
+    domLayout="autoHeight"
+    treeDataDisplayType="custom"
   />
 </template>
 
@@ -46,7 +46,10 @@ const columnDefs: ColDef<TreeGridRow>[] = [
     headerName: '№ п\\п',
     width: 100,
     valueGetter: (params: ValueGetterParams<TreeGridRow>) => {
-      if (params.node?.rowIndex === null || params.node?.rowIndex === undefined) {
+      if (
+        params.node?.rowIndex === null ||
+        params.node?.rowIndex === undefined
+      ) {
         return ''
       }
 
@@ -75,18 +78,15 @@ const defaultColDef: ColDef<TreeGridRow> = {
   suppressHeaderMenuButton: true,
 }
 
-const getDataPath: GetDataPath<TreeGridRow> = (data) => data.path
-
+const getDataPath: GetDataPath<TreeGridRow> = (data) => data.pathIds
 </script>
 
-<style scoped>
-.grid {
+<style lang="scss">
+.grid-tree {
   width: 100%;
 }
-</style>
 
-<style>
-.grid .ag-center-cols-viewport {
+.grid-tree .ag-center-cols-viewport {
   min-height: unset !important;
 }
 </style>
